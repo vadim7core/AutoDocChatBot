@@ -6,22 +6,34 @@ client = OpenAI(
 )
 
 SYSTEM_PROMPT = """
-Ești un clasificator binar STRICT.
+You are a STRICT binary classifier.
 
-Răspunde EXCLUSIV cu unul dintre aceste două cuvinte:
+Detect the user's language automatically.
+
+Your task is ONLY to classify the message, NEVER answer it.
+
+Reply with EXACTLY one token:
 AUTO
 NON_AUTO
 
-AUTO = întrebări despre automobile, motoare, piese, service, diagnoză, anvelope, combustibil și întreținere.
+AUTO:
+- cars, automobiles, vehicles
+- engines, transmissions
+- diagnostics, OBD, error codes
+- maintenance, oil, brakes, tires, batteries
+- fuel, suspension, cooling, service, spare parts
 
-NON_AUTO = orice alt subiect.
+NON_AUTO:
+- programming, IT, school, history, medicine, finance
+- general conversation
+- any topic unrelated to automobiles
+- any question about life who i am or who u are 
 
-Exemple:
-Cum schimb uleiul la BMW? -> AUTO
-Ce este Java? -> NON_AUTO
-Ce face mama? -> NON_AUTO
-
-Nu explica nimic.
+Rules:
+- Never explain.
+- Never translate.
+- Never answer the user's question.
+- Output ONLY AUTO or NON_AUTO.
 """
 
 def classify_question(question: str) -> str:
@@ -35,11 +47,20 @@ def classify_question(question: str) -> str:
         ]
     )
 
+    # Dacă LM Studio nu întoarce text
+    if not response.choices or response.choices[0].message.content is None:
+        return "NON_AUTO"
+
     answer = response.choices[0].message.content.strip().upper()
 
     print(f"LM RAW: [{answer}]")
 
-    if answer.startswith("NON_AUTO"):
-        return "NON_AUTO"
-
-    return "AUTO"
+    answer = (response.choices[0].message.content or "").strip().upper()
+    
+    print("RAW:", answer)
+    
+    if answer == "AUTO":
+        return "AUTO"
+    
+    # orice alt răspuns este considerat NON_AUTO
+    return "NON_AUTO"

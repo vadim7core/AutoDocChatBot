@@ -9,7 +9,7 @@ API_URL = os.getenv("DEEPSEEK_API_URL")
 
 
 
-def generate_reply(message: str) -> str:
+def generate_reply(history: list[dict], message: str) -> str:
     
     print(">>> DEEPSEEK A FOST APELAT <<<")
      
@@ -18,25 +18,28 @@ def generate_reply(message: str) -> str:
         "Content-Type": "application/json"
     }
 
-    payload = {
-        "model": "deepseek-chat",
-        "messages": [
+    messages = [
             {
                 "role": "system",
                 "content": (
-                    "Ești un expert în automobile. "
-                    "Răspunde doar la întrebări despre mașini, "
-                    "în limba română, clar și concis."
+                    "You are a helpful and knowledgeable AI assistant. "
+                    "Answer any question accurately, clearly, and concisely. "
+                    "Always reply in the same language as the user's message. "
                 )
             },
+            *history,
             {
                 "role": "user",
                 "content": message
             }
-        ],
+        ]
+
+    payload = {
+        "model": "deepseek-chat",
+        "messages": messages,
         "temperature": 0.5
     }
-
+    
     try:
         response = httpx.post(
             API_URL,
